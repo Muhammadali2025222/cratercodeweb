@@ -122,6 +122,16 @@ class Course {
       imageUrl: imageUrl ?? this.imageUrl,
     );
   }
+
+  String? get primaryDetailDescription {
+    for (final detail in details) {
+      final descriptionText = detail.description.trim();
+      if (descriptionText.isNotEmpty) {
+        return descriptionText;
+      }
+    }
+    return null;
+  }
 }
 
 class CourseDetail {

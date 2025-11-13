@@ -329,7 +329,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(scrollController: _scrollController),
+      appBar: CustomAppBar(
+        scrollController: _scrollController,
+        activeItem: 'Home',
+      ),
       backgroundColor: Colors.transparent,
       body: LayoutBuilder(
         builder: (context, constraints) {

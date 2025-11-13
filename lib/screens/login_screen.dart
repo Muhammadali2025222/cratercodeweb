@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_app_bar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,10 +29,10 @@ class _LoginScreenState extends State<LoginScreen> {
       
       // Simulate API call
       Future.delayed(const Duration(seconds: 1), () {
+        if (!mounted) return;
         setState(() => _isLoading = false);
         
         // Check credentials (in a real app, this would be an API call)
-        final username = _usernameController.text.trim();
         final password = _passwordController.text;
         
         // For demo purposes, accept any username with password 'admin123'
@@ -73,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),

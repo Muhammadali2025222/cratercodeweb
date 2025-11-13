@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/course.dart';
 import '../providers/course_provider.dart';
 import '../widgets/custom_app_bar.dart';
+import 'course_details_screen.dart';
 
 class CoursesScreen extends StatefulWidget {
   const CoursesScreen({super.key});
@@ -36,7 +37,10 @@ class _CoursesScreenState extends State<CoursesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(scrollController: _scrollController),
+      appBar: CustomAppBar(
+        scrollController: _scrollController,
+        activeItem: 'Courses',
+      ),
       body: Consumer<CourseProvider>(
         builder: (context, courseProvider, _) {
           final courses = courseProvider.courses;
@@ -256,7 +260,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                         context,
                       ),
                       const Spacer(),
-                      _buildLearnMoreButton(course),
+                      _buildLearnMoreButton(context, course),
                     ],
                   ),
                 ],
@@ -268,14 +272,21 @@ class _CoursesScreenState extends State<CoursesScreen> {
     );
   }
 
-  Widget _buildLearnMoreButton(Course course) {
+  Widget _buildLearnMoreButton(BuildContext context, Course course) {
     final accentColor = _getCategoryColor(course.category);
 
     return OutlinedButton.icon(
-      onPressed: () => _showCourseDetails(course),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CourseDetailsScreen(course: course),
+          ),
+        );
+      },
       style: OutlinedButton.styleFrom(
         foregroundColor: accentColor,
-        side: BorderSide(color: accentColor.withOpacity(0.7)),
+        side: BorderSide(color: accentColor.withValues(alpha: 0.7)),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -289,78 +300,6 @@ class _CoursesScreenState extends State<CoursesScreen> {
           fontSize: 14,
         ),
       ),
-    );
-  }
-
-  void _showCourseDetails(Course course) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final accentColor = _getCategoryColor(course.category);
-
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            course.title,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF24395A),
-            ),
-          ),
-          content: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  course.description,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF4B5D7A),
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: course.technologies
-                      .map((tech) => _buildTechChip(tech, context))
-                      .toList(),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    _buildInfoChip(Icons.schedule, course.duration, context),
-                    const SizedBox(width: 12),
-                    _buildInfoChip(Icons.school, course.level, context),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accentColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              ),
-              icon: const Icon(Icons.check_circle_outline, size: 18),
-              label: const Text('Got it'),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -509,7 +448,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                       (step) => Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                          child: _JourneyCard(
+                          child: _journeyCard(
                             icon: step.icon,
                             title: step.title,
                             description: step.body,
@@ -613,7 +552,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
     );
   }
 
-  Widget _JourneyCard({
+  Widget _journeyCard({
     required IconData icon,
     required String title,
     required String description,
@@ -626,7 +565,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
         border: Border.all(color: const Color(0xFFE1E6F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -640,7 +579,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
             height: 44,
             width: 44,
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.12),
+              color: accentColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: accentColor, size: 24),

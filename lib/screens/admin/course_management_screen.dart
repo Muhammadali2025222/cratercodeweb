@@ -4,6 +4,7 @@ import '../../models/course.dart';
 import '../../providers/course_provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../../providers/whatsapp_visibility_provider.dart';
 
 class CourseManagementScreen extends StatefulWidget {
   const CourseManagementScreen({super.key});
@@ -39,11 +40,13 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
       if (!courseProvider.hasLoadedFromApi && !courseProvider.isLoading) {
         courseProvider.fetchCourses();
       }
+      Provider.of<WhatsAppVisibilityProvider>(context, listen: false).setVisibility(false);
     });
   }
 
   @override
   void dispose() {
+    Provider.of<WhatsAppVisibilityProvider>(context, listen: false).setVisibility(true);
     _titleController.dispose();
     _descriptionController.dispose();
     _durationController.dispose();
@@ -90,7 +93,7 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -426,6 +429,9 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
       return;
     }
 
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
     final title = _titleController.text.trim();
     final description = _descriptionController.text.trim();
     final category = _categoryController.text.trim();
@@ -479,7 +485,7 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
         savedCourse = await courseProvider.updateCourse(baseCourse);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          messenger.showSnackBar(
             const SnackBar(content: Text('Course updated successfully')),
           );
         }
@@ -499,7 +505,7 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
         savedCourse = await courseProvider.createCourse(newCourse);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          messenger.showSnackBar(
             const SnackBar(content: Text('Course created successfully')),
           );
         }
@@ -515,18 +521,18 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
               .toList();
         });
 
-        Navigator.pop(context);
+        navigator.pop();
       }
     } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(content: Text(e.message)),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save course')), 
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Failed to save course')),
         );
       }
     } finally {
@@ -549,6 +555,7 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
           ),
           TextButton(
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(context);
               final courseProvider = Provider.of<CourseProvider>(
                 context,
@@ -557,23 +564,20 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
 
               try {
                 await courseProvider.deleteCourse(course.id);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${course.title} deleted')),
-                  );
-                }
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(content: Text('${course.title} deleted')),
+                );
               } on ApiException catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.message)),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Failed to delete course')),
-                  );
-                }
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(content: Text(e.message)),
+                );
+              } catch (_) {
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Failed to delete course')),
+                );
               }
             },
             child: const Text('DELETE', style: TextStyle(color: Colors.red)),
@@ -608,11 +612,11 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
                     decoration: BoxDecoration(
-                      color: theme.dialogBackgroundColor,
+                      color: theme.dialogTheme.backgroundColor ?? theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.25),
+                          color: Colors.black.withValues(alpha: 0.25),
                           blurRadius: 18,
                           offset: const Offset(0, 12),
                         ),
@@ -637,7 +641,8 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                                 Text(
                                   'Add a tech stack and its description in pairs',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                        color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                                        color: theme.textTheme.bodySmall?.color
+                                            ?.withValues(alpha: 0.7),
                                       ),
                                 ),
                               ],
@@ -666,7 +671,7 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                                         color: theme.colorScheme.surface,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.05),
+                                            color: Colors.black.withValues(alpha: 0.05),
                                             blurRadius: 12,
                                             offset: const Offset(0, 6),
                                           ),
@@ -708,12 +713,13 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                                                 labelText: 'Technological Stack',
                                                 hintText: 'e.g., Flutter + Firebase',
                                                 filled: true,
-                                                fillColor: theme.colorScheme.surfaceVariant
-                                                    .withOpacity(0.4),
+                                                fillColor: theme
+                                                    .colorScheme.surfaceContainerHighest
+                                                    .withValues(alpha: 0.4),
                                                 border: OutlineInputBorder(
                                                   borderRadius: BorderRadius.circular(14),
                                                   borderSide: BorderSide(
-                                                    color: theme.dividerColor.withOpacity(0.4),
+                                                    color: theme.dividerColor.withValues(alpha: 0.4),
                                                   ),
                                                 ),
                                               ),
@@ -727,12 +733,13 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                                                 hintText:
                                                     'Share key outcomes, tools, or topics for this stack',
                                                 filled: true,
-                                                fillColor: theme.colorScheme.surfaceVariant
-                                                    .withOpacity(0.4),
+                                                fillColor: theme
+                                                    .colorScheme.surfaceContainerHighest
+                                                    .withValues(alpha: 0.4),
                                                 border: OutlineInputBorder(
                                                   borderRadius: BorderRadius.circular(14),
                                                   borderSide: BorderSide(
-                                                    color: theme.dividerColor.withOpacity(0.4),
+                                                    color: theme.dividerColor.withValues(alpha: 0.4),
                                                   ),
                                                 ),
                                               ),
@@ -785,6 +792,8 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                                 onPressed: isSavingDetails
                                     ? null
                                     : () async {
+                                        final messenger = ScaffoldMessenger.of(context);
+                                        final sheetNavigator = Navigator.of(sheetContext);
                                         final updatedDetails = _detailControllers
                                             .map((pair) => CourseDetail(
                                                   techStack: pair['techStack']!.text.trim(),
@@ -805,7 +814,8 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                                               .upsertCourseDetails(course.id, updatedDetails);
 
                                           final courseForState = updatedCourse;
-                                          if (courseForState != null && mounted) {
+                                          if (!mounted) return;
+                                          if (courseForState != null) {
                                             setState(() {
                                               if (_editingCourseId == courseForState.id) {
                                                 _selectedCourse = courseForState;
@@ -816,33 +826,32 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                                             });
                                           }
 
-                                          if (mounted) {
-                                            Navigator.of(sheetContext).pop();
+                                          if (!sheetContext.mounted) return;
+                                          sheetNavigator.pop();
 
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content:
-                                                    Text('Details updated for "${course.title}"'),
-                                                behavior: SnackBarBehavior.floating,
-                                              ),
-                                            );
-                                          }
+                                          messenger.showSnackBar(
+                                            SnackBar(
+                                              content:
+                                                  Text('Details updated for "${course.title}"'),
+                                              behavior: SnackBarBehavior.floating,
+                                            ),
+                                          );
                                         } on ApiException catch (e) {
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text(e.message)),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Failed to update course details'),
-                                              ),
-                                            );
-                                          }
+                                          if (!mounted) return;
+                                          messenger.showSnackBar(
+                                            SnackBar(content: Text(e.message)),
+                                          );
+                                        } catch (_) {
+                                          if (!mounted) return;
+                                          messenger.showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Failed to update course details'),
+                                            ),
+                                          );
                                         } finally {
-                                          setSheetState(() => isSavingDetails = false);
+                                          if (sheetContext.mounted) {
+                                            setSheetState(() => isSavingDetails = false);
+                                          }
                                         }
                                       },
                                 style: ElevatedButton.styleFrom(
@@ -1009,8 +1018,10 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                                   horizontal: 12,
                                   vertical: 8,
                                 ),
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withValues(alpha: 0.08),
                                 foregroundColor: Theme.of(context).colorScheme.primary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),

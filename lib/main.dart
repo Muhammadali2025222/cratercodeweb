@@ -4,13 +4,16 @@ import 'screens/home.dart';
 import 'screens/login_screen.dart';
 import 'screens/admin/course_management_screen.dart';
 import 'providers/course_provider.dart';
+import 'providers/whatsapp_visibility_provider.dart';
 import 'theme/app_theme.dart';
+import 'widgets/whatsapp_floating_button.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CourseProvider()),
+        ChangeNotifierProvider(create: (_) => WhatsAppVisibilityProvider()),
       ],
       child: const MyApp(),
     ),
@@ -34,6 +37,15 @@ class MyApp extends StatelessWidget {
           title: 'Crater Code',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
+          builder: (context, child) {
+            final showWhatsApp = context.watch<WhatsAppVisibilityProvider>().isVisible;
+            return Stack(
+              children: [
+                if (child != null) child,
+                if (showWhatsApp) const WhatsAppFloatingButton(),
+              ],
+            );
+          },
           home: const HomeScreen(),
           routes: {
             '/home': (context) => const HomeScreen(),

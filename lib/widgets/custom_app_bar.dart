@@ -1,34 +1,35 @@
 import 'package:flutter/material.dart';
+
+import '../screens/about_us_screen.dart';
 import '../screens/application_form_screen.dart';
+import '../screens/contact_screen.dart';
+import '../screens/courses_screen.dart';
+import '../screens/home.dart';
+import '../screens/faq_screen.dart';
 import '../screens/login_screen.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final ScrollController scrollController;
   final String? title;
+  final String? activeItem;
   
   const CustomAppBar({
     super.key,
     required this.scrollController,
     this.title,
+    this.activeItem,
   });
 
   @override
   State<CustomAppBar> createState() => _CustomAppBarState();
 
   @override
-  Size get preferredSize => const Size.fromHeight(140); // Default height
+  Size get preferredSize => const Size.fromHeight(180); // Default height
 }
 
 class _CustomAppBarState extends State<CustomAppBar> with SingleTickerProviderStateMixin {
   bool _isScrolled = false;
   late AnimationController _animationController;
-  static const List<_NavMenuItem> _navItems = [
-    _NavMenuItem(text: 'Home', isActive: true, onSelected: _noop),
-    _NavMenuItem(text: 'Courses', onSelected: _noop),
-    _NavMenuItem(text: 'Contact Us', onSelected: _noop),
-    _NavMenuItem(text: 'FAQ', onSelected: _noop),
-    _NavMenuItem(text: 'About Us', onSelected: _noop),
-  ];
 
   @override
   void initState() {
@@ -62,20 +63,73 @@ class _CustomAppBarState extends State<CustomAppBar> with SingleTickerProviderSt
     }
   }
 
+  List<_NavMenuItem> _buildNavItems() {
+    final activeLabel = (widget.activeItem ?? widget.title ?? 'Home').toLowerCase();
+
+    return [
+      _NavMenuItem(
+        text: 'Home',
+        isActive: activeLabel == 'home',
+        builder: (context) => const HomeScreen(),
+      ),
+      _NavMenuItem(
+        text: 'Courses',
+        isActive: activeLabel == 'courses',
+        builder: (context) => const CoursesScreen(),
+      ),
+      _NavMenuItem(
+        text: 'Contact Us',
+        isActive: activeLabel == 'contact us',
+        builder: (context) => const ContactScreen(),
+      ),
+      _NavMenuItem(
+        text: 'FAQ',
+        isActive: activeLabel == 'faq',
+        builder: (context) => const FaqScreen(),
+      ),
+      _NavMenuItem(
+        text: 'About Us',
+        isActive: activeLabel == 'about us',
+        builder: (context) => const AboutUsScreen(),
+      ),
+    ];
+  }
+
+  void _handleNavTap(_NavMenuItem item) {
+    if (item.builder == null) {
+      return;
+    }
+
+    if (item.isActive) {
+      widget.scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: item.builder!),
+    );
+  }
+
   List<Widget> _buildDesktopNavChildren() {
+    final navItems = _buildNavItems();
     final widgets = <Widget>[const SizedBox(width: 30)];
 
-    for (var i = 0; i < _navItems.length; i++) {
+    for (var i = 0; i < navItems.length; i++) {
       if (i > 0) {
         widgets.add(const SizedBox(width: 10));
       }
 
-      final item = _navItems[i];
+      final item = navItems[i];
       widgets.add(
         _NavItem(
           text: item.text,
           isActive: item.isActive,
-          onTap: item.onSelected,
+          onTap: () => _handleNavTap(item),
         ),
       );
     }
@@ -188,7 +242,7 @@ class _CustomAppBarState extends State<CustomAppBar> with SingleTickerProviderSt
                     child: TextButton(
                       onPressed: () {
                         Navigator.of(sheetContext).pop();
-                        item.onSelected();
+                        _handleNavTap(item);
                       },
                       style: TextButton.styleFrom(
                         alignment: Alignment.centerLeft,
@@ -291,7 +345,7 @@ class _CustomAppBarState extends State<CustomAppBar> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final isSmallScreen = MediaQuery.of(context).size.width < 768;
-    
+
     const collapsedHeight = 68.0;
     const expandedHeight = 140.0;
 
@@ -371,7 +425,7 @@ class _CustomAppBarState extends State<CustomAppBar> with SingleTickerProviderSt
                   if (isSmallScreen)
                     IconButton(
                       icon: const Icon(Icons.menu, color: Colors.black),
-                      onPressed: () => _openMobileMenu(_navItems),
+                      onPressed: () => _openMobileMenu(_buildNavItems()),
                     ),
                 ],
               ),
@@ -380,7 +434,8 @@ class _CustomAppBarState extends State<CustomAppBar> with SingleTickerProviderSt
 
           if (!_isScrolled)
             Positioned(
-              bottom: -28,
+              top: 30,
+              
               child: SizedBox(
                 height: 160,
                 child: Image.asset(
@@ -398,17 +453,15 @@ class _CustomAppBarState extends State<CustomAppBar> with SingleTickerProviderSt
   }
 }
 
-void _noop() {}
-
 class _NavMenuItem {
   final String text;
   final bool isActive;
-  final VoidCallback onSelected;
+  final WidgetBuilder? builder;
 
   const _NavMenuItem({
     required this.text,
     this.isActive = false,
-    required this.onSelected,
+    this.builder,
   });
 }
 
